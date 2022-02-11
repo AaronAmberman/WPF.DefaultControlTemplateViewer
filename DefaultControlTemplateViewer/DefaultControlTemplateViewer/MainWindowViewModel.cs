@@ -5,8 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -22,17 +20,28 @@ namespace DefaultControlTemplateViewer
         private Assembly? presentationFramework;
         private string? typeFilter;
         private TypePropertiesMap? selectedTypeMap;
-        private object? selectedControlTemplate;
+        private object? selectedTemplateInstance;
         private int selectedThemeIndex;
+        private TemplateEntry? selectedTemplateEntry;
 
         public ContentControl? ContentControlRenderer { get; set; } = null;
 
-        public object? SelectedTemplate 
+        public TemplateEntry? SelectedTemplateEntry 
         { 
-            get => selectedControlTemplate; 
+            get => selectedTemplateEntry; 
             set
             {
-                selectedControlTemplate = value;
+                selectedTemplateEntry = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public object? SelectedTemplateInstance
+        {
+            get => selectedTemplateInstance;
+            set
+            {
+                selectedTemplateInstance = value;
                 OnPropertyChanged();
             }
         }
@@ -49,43 +58,55 @@ namespace DefaultControlTemplateViewer
                 switch (value)
                 {
                     case 0:
-                        uri = "/PresentationFramework.Aero;v4.0.0.0;Component/themes/aero.normalcolor.xaml";
+                        uri = "";
                         break;
                     case 1:
-                        uri = "/PresentationFramework.Luna;v4.0.0.0;Component/themes/luna.normalcolor.xaml";
+                        uri = "/PresentationFramework.Aero;v4.0.0.0;Component/themes/aero.normalcolor.xaml";
                         break;
                     case 2:
-                        uri = "/PresentationFramework.Luna;v4.0.0.0;Component/themes/luna.homestead.xaml";
+                        uri = "/PresentationFramework.Luna;v4.0.0.0;Component/themes/luna.normalcolor.xaml";
                         break;
                     case 3:
-                        uri = "/PresentationFramework.Luna;v4.0.0.0;Component/themes/luna.metallic.xaml";
+                        uri = "/PresentationFramework.Luna;v4.0.0.0;Component/themes/luna.homestead.xaml";
                         break;
                     case 4:
-                        uri = "/PresentationFramework.Classic;v4.0.0.0;Component/themes/classic.xaml";
+                        uri = "/PresentationFramework.Luna;v4.0.0.0;Component/themes/luna.metallic.xaml";
                         break;
                     case 5:
+                        uri = "/PresentationFramework.Classic;v4.0.0.0;Component/themes/classic.xaml";
+                        break;
+                    case 6:
                         uri = "/PresentationFramework.Royale;v4.0.0.0;Component/themes/royale.normalcolor.xaml";
                         break;
                 }
 
                 try
                 {
-                    Uri themeUri = new Uri(uri, UriKind.Relative);
-                    ResourceDictionary themeResources = (ResourceDictionary)Application.LoadComponent(themeUri);
+                    if (!string.IsNullOrWhiteSpace(uri))
+                    {
+                        Uri themeUri = new Uri(uri, UriKind.Relative);
+                        ResourceDictionary themeResources = (ResourceDictionary)Application.LoadComponent(themeUri);
 
-                    // assign the read in resource dictionary to our grid wrapper in the ControlTemplate tab
-                    // this will allow the template text to be properly retrieved
-                    if (ContentControlRenderer != null)
-                        ContentControlRenderer.Resources = themeResources;
+                        // assign the read in resource dictionary to our ContentControl
+                        // this will allow the template text to be properly retrieved
+                        if (ContentControlRenderer != null)
+                            ContentControlRenderer.Resources = themeResources;
+                    }
+                    else
+                    {
+                        // gets the default template without any themeing applied
+                        if (ContentControlRenderer != null)
+                            ContentControlRenderer.Resources.Clear();
+                    }
 
                     if (SelectedTypeMap != null)
                     {
                         GetAndDisplayControlTemplate();
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    MessageBox.Show("Unable to load data for selected theme.", "Theme Load Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Unable to load data for selected theme. {ex.Message}", "Theme Load Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
 
                 OnPropertyChanged();
@@ -99,13 +120,19 @@ namespace DefaultControlTemplateViewer
             {
                 selectedTypeMap = value;
 
-                GetAndDisplayControlTemplate();
+                if (value == null)
+                {
+                    // if the user selected nothing than clear the right side
+                    Templates?.Clear();
+                }
+                else
+                {
+                    GetAndDisplayControlTemplate();
+                }
 
                 OnPropertyChanged();
             }
         }
-
-        public TabControl? TabControl { get; set; }
 
         public string? TypeFilter
         {
@@ -120,6 +147,8 @@ namespace DefaultControlTemplateViewer
             }
         }
 
+        public ObservableCollection<TemplateEntry>? Templates { get; set; } = new ObservableCollection<TemplateEntry>();
+
         public ObservableCollection<TypePropertiesMap> TypePropertiesMapping { get; set; } = new ObservableCollection<TypePropertiesMap>();
 
         public MainWindowViewModel()
@@ -131,25 +160,25 @@ namespace DefaultControlTemplateViewer
         {
             try
             {
+                // verify data
                 if (presentationFramework == null) return;
                 if (SelectedTypeMap == null) return;
                 if (SelectedTypeMap.Type == null) return;
                 if (string.IsNullOrEmpty(SelectedTypeMap.Type.FullName)) return;
 
-                // remove all tabs except our Sample tab
-                if (TabControl != null)
-                {
-                    TabControl.Items.Clear();
-                }
+                Templates?.Clear();
 
+                // get instance of FrameworkTemplate object and instantiate it and render it (via binding)
                 object? instance = presentationFramework.CreateInstance(SelectedTypeMap.Type.FullName);
                 Type? instanceType = instance?.GetType();
-                Window? window = null;
-                NavigationWindow? navigationWindow = null;
-
+                
                 if (instance == null) return;
                 if (instanceType == null) return;
 
+                Window? window = null;
+                NavigationWindow? navigationWindow = null;
+
+                // do something to ensure data is retrievable (some what type specific)
                 if (instanceType == typeof(ToolTip) || instanceType == typeof(Window))
                 {
                     // cannot be set as a child so cannot be bound
@@ -178,7 +207,7 @@ namespace DefaultControlTemplateViewer
                         ContextMenu = (ContextMenu)instance
                     };
 
-                    SelectedTemplate = frame;
+                    SelectedTemplateInstance = frame;
                 }
                 else if (typeof(Page).IsAssignableFrom(instanceType))
                 {
@@ -187,7 +216,7 @@ namespace DefaultControlTemplateViewer
                         Content = instance
                     };
 
-                    SelectedTemplate = frame;
+                    SelectedTemplateInstance = frame;
                 }
                 else
                 {
@@ -197,9 +226,10 @@ namespace DefaultControlTemplateViewer
                      * WPF engine will instantiate the FrameworkTemplate and then we can read it...then we can
                      * write it in plain text
                      */
-                    SelectedTemplate = instance;
+                    SelectedTemplateInstance = instance;
                 }
 
+                // loop through each FrameworkTemplate property type we have asking for the contents
                 foreach (PropertyInfo pi in SelectedTypeMap.TypeProperties)
                 {
                     string name = pi.Name;
@@ -209,6 +239,7 @@ namespace DefaultControlTemplateViewer
 
                     string templateString = string.Empty;
 
+                    // write out XAML if we were able to cast the object appropriately
                     if (ft != null)
                     {
                         string filename = Path.GetTempFileName();
@@ -233,35 +264,17 @@ namespace DefaultControlTemplateViewer
                         File.Delete(filename);
                     }
 
-                    // we will a a tab to the tab control for each property that we have to display data for
-                    // but only if the string is not null, we don't care to show empty properties
+                    // output the data if we got some, we don't want to show empty entries
                     if (!string.IsNullOrWhiteSpace(templateString))
                     {
-                        TabItem tabItem = new TabItem
-                        {
-                            Header = name
-                        };
-
-                        TextBox tb = new TextBox
-                        {
-                            Text = templateString,
-                            IsReadOnly = true
-                        };
-
-                        ScrollViewer sv = new ScrollViewer();
-                        sv.Content = tb;
-                        sv.HorizontalScrollBarVisibility = ScrollBarVisibility.Auto;
-                        sv.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
-
-                        tabItem.Content = sv;
-                        tabItem.Padding = new Thickness(5);
-
-                        if (TabControl != null)
-                        {
-                            TabControl.Items.Insert(0, tabItem);
-                            TabControl.SelectedIndex = 0;
-                        }
+                        Templates?.Add(new TemplateEntry { Content = templateString, Header = name });
                     }
+                }
+
+                // set our selected entry to the view shows the template text
+                if (Templates?.Count > 0)
+                {
+                    SelectedTemplateEntry = Templates[0];
                 }
 
                 if (window != null) window.Close();
@@ -282,6 +295,7 @@ namespace DefaultControlTemplateViewer
                 presentationFramework = Assembly.Load("PresentationFramework");
 
                 List<Type> types = presentationFramework.GetTypes().ToList();
+                List<TypePropertiesMap> results = new List<TypePropertiesMap>();
 
                 foreach (Type type in types)
                 {
@@ -302,7 +316,7 @@ namespace DefaultControlTemplateViewer
 
                     if (templatedProperties.Count == 0) { continue; }
 
-                    TypePropertiesMapping.Add(new TypePropertiesMap
+                    results.Add(new TypePropertiesMap
                     {
                         Type = type,
                         TypeProperties = templatedProperties
@@ -311,10 +325,18 @@ namespace DefaultControlTemplateViewer
                     cv = (CollectionView)CollectionViewSource.GetDefaultView(TypePropertiesMapping);
                     cv.Filter = TypeFiltering;
                 }
+
+                // after we have our results lets sort them by namespace then name
+                results = results.OrderBy(tpe => tpe.Type?.Namespace).ThenBy(tpe => tpe.Type?.Name).ToList();
+
+                foreach (TypePropertiesMap result in results)
+                {
+                    TypePropertiesMapping.Add(result);
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                MessageBox.Show("Unable to load the assembly information for PresentationFramework.", "Load Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Unable to load the assembly information for PresentationFramework. {ex.Message}", "Load Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

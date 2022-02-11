@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DefaultControlTemplateViewer"
         mc:Ignorable="d"
-        Title="WPF Default Control Template Viewer" Height="450" Width="800" WindowStartupLocation="CenterScreen"
+        Title="WPF Default Control Template Viewer" Height="768" Width="1024" WindowStartupLocation="CenterScreen"
         Loaded="Window_Loaded"
         d:DataContext="{d:DesignInstance {x:Type local:MainWindowViewModel}}">
     <Grid>
@@ -22,6 +22,7 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
                 <ComboBox Grid.Row="0" SelectedIndex="{Binding SelectedThemeIndex}">
+                    <ComboBoxItem Content="Default"/>
                     <ComboBoxItem Content="Aero"/>
                     <ComboBoxItem Content="Luna"/>
                     <ComboBoxItem Content="Luna Homestead"/>
@@ -57,7 +58,7 @@
                         <GridView>
                             <GridViewColumn Header="Type" DisplayMemberBinding="{Binding Type.Name}" />
                             <GridViewColumn Header="Base" DisplayMemberBinding="{Binding Type.BaseType.Name}" />
-                            <GridViewColumn Header="Namespace" DisplayMemberBinding="{Binding Type.Namespace}" />
+                            <GridViewColumn Header="Namespace" Width="210" DisplayMemberBinding="{Binding Type.Namespace}" />
                         </GridView>
                     </ListView.View>
                 </ListView>
@@ -67,13 +68,48 @@
         <Grid Grid.Column="2">
             <Grid Margin="5">
                 <!--
-                        we don't need to see the Grid or ContentControl for the binding to take effect 
-                        (which allows us to render the templates textually)
-                    -->
-                <ContentControl x:Name="ContentRenderer" Content="{Binding SelectedTemplate}" Margin="50" />
-                <TabControl x:Name="DisplayTabControl">
-                    
+                    we don't need to see the ContentControl for the binding to take effect 
+                    (which allows us to render the templates textually)
+                 -->
+                <ContentControl x:Name="ContentRenderer" Content="{Binding SelectedTemplateInstance}" Margin="50" />
+                <TabControl ItemsSource="{Binding Templates}" SelectedItem="{Binding SelectedTemplateEntry}">
+                    <TabControl.ItemContainerStyle>
+                        <Style TargetType="TabItem">
+                            <Setter Property="Content" Value="{Binding Content}" />
+                            <Setter Property="Header" Value="{Binding Header}" />
+                        </Style>
+                    </TabControl.ItemContainerStyle>
+                    <TabControl.ContentTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding Path=.}" IsReadOnly="True" 
+                                     HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" />
+                        </DataTemplate>
+                    </TabControl.ContentTemplate>
                 </TabControl>
+                <Border Background="#AA000000" Margin="0,2,0,0">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Templates.Count}" Value="0">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>                            
+                        </Style>
+                    </Border.Style>
+                    <TextBlock FontSize="18" TextWrapping="Wrap" Foreground="#FFFFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="There are no templates to output for this item." />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedTypeMap}" Value="{x:Null}">
+                                        <Setter Property="Text" Value="Please select an item to display templates for." />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Border>
             </Grid>
         </Grid>
     </Grid>
