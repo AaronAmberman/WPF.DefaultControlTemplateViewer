@@ -20,8 +20,7 @@ namespace DefaultControlTemplateViewer
 
             vm = new MainWindowViewModel
             {
-                // this will allow us to dynamically assign its resource to
-                // the programmatically loaded (can't bind resource dictionaries)
+                // this will allow us to dynamically assign its resource (can't bind resource dictionaries)
                 ContentControlRenderer = ContentRenderer
             };
 
