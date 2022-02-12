@@ -9,108 +9,167 @@
         Loaded="Window_Loaded"
         d:DataContext="{d:DesignInstance {x:Type local:MainWindowViewModel}}">
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="2*" />
-        </Grid.ColumnDefinitions>
-        <Grid Grid.Column="0">
-            <Grid Margin="5">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-                <ComboBox Grid.Row="0" SelectedIndex="{Binding SelectedThemeIndex}">
-                    <ComboBoxItem Content="Default"/>
-                    <ComboBoxItem Content="Aero"/>
-                    <ComboBoxItem Content="Luna"/>
-                    <ComboBoxItem Content="Luna Homestead"/>
-                    <ComboBoxItem Content="Luna Metallic"/>
-                    <ComboBoxItem Content="Classic"/>
-                    <ComboBoxItem Content="Royale"/>
-                </ComboBox>
-                <Grid Grid.Row="1" Margin="0,5">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="Filter" Margin="0,0,5,0" />
-                    <TextBox Grid.Column="1" Text="{Binding TypeFilter, UpdateSourceTrigger=PropertyChanged}" />
-                    <TextBlock Grid.Column="1" IsHitTestVisible="False" Text="Filter types..." Foreground="Gray" Margin="3,0,0,0" Padding="0,1,0,0">
-                        <TextBlock.Style>
-                            <Style TargetType="{x:Type TextBlock}">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding TypeFilter}" Value="">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding TypeFilter}" Value="{x:Null}">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                </Grid>
-                <ListView Grid.Row="2" ItemsSource="{Binding TypePropertiesMapping}" SelectedItem="{Binding SelectedTypeMap}">
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn Header="Type" DisplayMemberBinding="{Binding Type.Name}" />
-                            <GridViewColumn Header="Base" DisplayMemberBinding="{Binding Type.BaseType.Name}" />
-                            <GridViewColumn Header="Namespace" Width="210" DisplayMemberBinding="{Binding Type.Namespace}" />
-                        </GridView>
-                    </ListView.View>
-                </ListView>
-            </Grid>
-        </Grid>
-        <GridSplitter Grid.Column="1" ResizeBehavior="PreviousAndNext" ResizeDirection="Columns" Width="3" Background="Black" />
-        <Grid Grid.Column="2">
-            <Grid Margin="5">
-                <!--
-                    we don't need to see the ContentControl for the binding to take effect 
-                    (which allows us to render the templates textually)
-                 -->
-                <ContentControl x:Name="ContentRenderer" Content="{Binding SelectedTemplateInstance}" Margin="50" />
-                <TabControl ItemsSource="{Binding Templates}" SelectedItem="{Binding SelectedTemplateEntry}">
-                    <TabControl.ItemContainerStyle>
-                        <Style TargetType="TabItem">
-                            <Setter Property="Content" Value="{Binding Content}" />
-                            <Setter Property="Header" Value="{Binding Header}" />
-                        </Style>
-                    </TabControl.ItemContainerStyle>
-                    <TabControl.ContentTemplate>
-                        <DataTemplate>
-                            <TextBox Text="{Binding Path=.}" IsReadOnly="True" 
-                                     HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" />
-                        </DataTemplate>
-                    </TabControl.ContentTemplate>
-                </TabControl>
-                <Border Background="#AA000000" Margin="0,2,0,0">
-                    <Border.Style>
-                        <Style TargetType="Border">
-                            <Setter Property="Visibility" Value="Collapsed" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Templates.Count}" Value="0">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                </DataTrigger>
-                            </Style.Triggers>                            
-                        </Style>
-                    </Border.Style>
-                    <TextBlock FontSize="18" TextWrapping="Wrap" Foreground="#FFFFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Text" Value="There are no templates to output for this item." />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding SelectedTypeMap}" Value="{x:Null}">
-                                        <Setter Property="Text" Value="Please select an item to display templates for." />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                </Border>
-            </Grid>
+        <Grid Margin="5">
+            <TabControl>
+                <TabItem Header="Control Templates">
+                    <Grid Margin="5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="2*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid Grid.Column="0">
+                            <Grid Margin="5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <ComboBox Grid.Row="0" SelectedIndex="{Binding SelectedThemeIndex}">
+                                    <ComboBoxItem Content="Default"/>
+                                    <ComboBoxItem Content="Aero"/>
+                                    <ComboBoxItem Content="Luna"/>
+                                    <ComboBoxItem Content="Luna Homestead"/>
+                                    <ComboBoxItem Content="Luna Metallic"/>
+                                    <ComboBoxItem Content="Classic"/>
+                                    <ComboBoxItem Content="Royale"/>
+                                </ComboBox>
+                                <Grid Grid.Row="1" Margin="0,5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Filter" Margin="0,0,5,0" />
+                                    <TextBox Grid.Column="1" Text="{Binding TypeFilter, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBlock Grid.Column="1" IsHitTestVisible="False" Text="Filter types..." Foreground="Gray" Margin="3,0,0,0" Padding="0,1,0,0">
+                                        <TextBlock.Style>
+                                            <Style TargetType="{x:Type TextBlock}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding TypeFilter}" Value="">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding TypeFilter}" Value="{x:Null}">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Grid>
+                                <ListView Grid.Row="2" ItemsSource="{Binding TypePropertiesMapping}" SelectedItem="{Binding SelectedTypeMap}">
+                                    <ListView.View>
+                                        <GridView>
+                                            <GridViewColumn Header="Type" DisplayMemberBinding="{Binding Type.Name}" />
+                                            <GridViewColumn Header="Base" DisplayMemberBinding="{Binding Type.BaseType.Name}" />
+                                            <GridViewColumn Header="Namespace" Width="210" DisplayMemberBinding="{Binding Type.Namespace}" />
+                                        </GridView>
+                                    </ListView.View>
+                                </ListView>
+                            </Grid>
+                        </Grid>
+                        <GridSplitter Grid.Column="1" ResizeBehavior="PreviousAndNext" ResizeDirection="Columns" Width="3" Background="Black" />
+                        <Grid Grid.Column="2">
+                            <Grid Margin="5">
+                                <!--
+                                    we don't need to see the ContentControl for the binding to take effect 
+                                    (which allows us to render the templates textually)
+                                -->
+                                <ContentControl x:Name="ContentRenderer" Content="{Binding SelectedTemplateInstance}" Margin="50" />
+                                <TabControl ItemsSource="{Binding Templates}" SelectedItem="{Binding SelectedTemplateEntry}">
+                                    <TabControl.ItemContainerStyle>
+                                        <Style TargetType="TabItem">
+                                            <Setter Property="Content" Value="{Binding Content}" />
+                                            <Setter Property="Header" Value="{Binding Header}" />
+                                        </Style>
+                                    </TabControl.ItemContainerStyle>
+                                    <TabControl.ContentTemplate>
+                                        <DataTemplate>
+                                            <TextBox Text="{Binding Path=.}" IsReadOnly="True" 
+                                                     HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" />
+                                        </DataTemplate>
+                                    </TabControl.ContentTemplate>
+                                </TabControl>
+                                <Border Background="#AA000000" Margin="0,2,0,0">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Templates.Count}" Value="0">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock FontSize="18" TextWrapping="Wrap" Foreground="#FFFFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="There are no templates to output for this item." />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding SelectedTypeMap}" Value="{x:Null}">
+                                                        <Setter Property="Text" Value="Please select an item to display templates for." />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Border>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="Resource Dictionaries">
+                    <Grid Margin="5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="3*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid Grid.Column="0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" TextWrapping="Wrap">
+                                Ever wonder what Microsoft does for theming? Now wonder no more! You can see some of their theming work for 
+                                themes attached to the PresentationFramework assembly.
+                                <LineBreak />
+                                <LineBreak />
+                                We have the capability to generate the ResourceDictionary in its entirity for one of the themes. However we cannot 
+                                do this for the default look and feel because the ResourceDictionary cannot be located.
+                                <LineBreak />
+                                <LineBreak />
+                                Just click on the generate button for whatever theme you'd like to view.
+                                <LineBreak />
+                                <LineBreak />
+                                This work must be done on the UI thread so there will be a small period where the application freezes and this 
+                                cannot be avoided because XAML serialization <Underline><Bold>must</Bold></Underline> be done on the UI thread. Shouldn't take too long per button 
+                                click...maybe 10 seconds worst case.
+                            </TextBlock>
+                            <Grid Grid.Row="1" Margin="0,15,0,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <Button Grid.Row="0" Content="Generate Aero Theme" Margin="0,0,0,5" Command="{Binding GenAeroCommand}" />
+                                <Button Grid.Row="1" Content="Generate Luna Theme" Margin="0,0,0,5" Command="{Binding GenLunaCommand}" />
+                                <Button Grid.Row="2" Content="Generate Luna Homestead Theme" Margin="0,0,0,5" Command="{Binding GenLunaHomesteadCommand}" />
+                                <Button Grid.Row="3" Content="Generate Luna Metallic Theme" Margin="0,0,0,5" Command="{Binding GenLunaMetallicCommand}" />
+                                <Button Grid.Row="4" Content="Generate Classic Theme" Margin="0,0,0,5" Command="{Binding GenClassicCommand}" />
+                                <Button Grid.Row="5" Content="Generate Royale Theme" Command="{Binding GenRoyaleCommand}" />
+                            </Grid>
+                        </Grid>
+                        <Grid Grid.Column="1">
+                            <TextBox IsReadOnly="True" Margin="5,0,0,0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                                     Text="{Binding ResourceDictionaryString}" />
+                        </Grid>
+                    </Grid>
+                </TabItem>
+            </TabControl>
         </Grid>
     </Grid>
 </Window>

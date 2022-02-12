@@ -5,11 +5,15 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Navigation;
+using System.Windows.Threading;
 using System.Xml;
 
 namespace DefaultControlTemplateViewer
@@ -17,18 +21,44 @@ namespace DefaultControlTemplateViewer
     public class MainWindowViewModel : ViewModelBase
     {
         private CollectionView? cv;
+        private ICommand? genAeroCommand;
+        private ICommand? genLunaCommand;
+        private ICommand? genLunaHomesteadCommand;
+        private ICommand? genLunaMetallicCommand;
+        private ICommand? genClassicCommand;
+        private ICommand? genRoyaleCommand;
         private Assembly? presentationFramework;
-        private string? typeFilter;
+        private string? resourceDictionaryString;
         private TypePropertiesMap? selectedTypeMap;
         private object? selectedTemplateInstance;
         private int selectedThemeIndex;
         private TemplateEntry? selectedTemplateEntry;
+        private string? typeFilter;
 
         public ContentControl? ContentControlRenderer { get; set; } = null;
 
-        public TemplateEntry? SelectedTemplateEntry 
+        public Dispatcher? Dispatcher { get; set; } = null;
+
+        public ICommand GenAeroCommand => genAeroCommand ??= new RelayCommand(GenerateAero);
+        public ICommand GenLunaCommand => genLunaCommand ??= new RelayCommand(GenerateLuna);
+        public ICommand GenLunaHomesteadCommand => genLunaHomesteadCommand ??= new RelayCommand(GenerateLunaHomestead);
+        public ICommand GenLunaMetallicCommand => genLunaMetallicCommand ??= new RelayCommand(GenerateMetallic);
+        public ICommand GenClassicCommand => genClassicCommand ??= new RelayCommand(GenerateClassic);
+        public ICommand GenRoyaleCommand => genRoyaleCommand ??= new RelayCommand(GenerateRoyale);
+
+        public string? ResourceDictionaryString 
         { 
-            get => selectedTemplateEntry; 
+            get => resourceDictionaryString; 
+            set
+            {
+                resourceDictionaryString = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public TemplateEntry? SelectedTemplateEntry
+        {
+            get => selectedTemplateEntry;
             set
             {
                 selectedTemplateEntry = value;
@@ -94,7 +124,7 @@ namespace DefaultControlTemplateViewer
                     }
                     else
                     {
-                        // gets the default template without any themeing applied
+                        // gets the default template without any theming applied
                         if (ContentControlRenderer != null)
                             ContentControlRenderer.Resources.Clear();
                     }
@@ -156,6 +186,90 @@ namespace DefaultControlTemplateViewer
             SelectedThemeIndex = 0; // trigger initial theme selection
         }
 
+        private void GenTheme(string resourceDictionary)
+        {
+            /*
+             * This cannot be multi-threaded because XamlWriter.Save requires STA threaded apartments. So
+             * if a thread is started to run the method than it throws an exception. Just have to deal with
+             * the lag that is produced by this operation.
+             */
+
+            try
+            {
+                string filename = Path.GetTempFileName();
+
+                File.Delete(filename); // delete the file it generated
+
+                filename = Path.ChangeExtension(filename, "xaml");
+
+                // get the resource dictionary
+                Uri uri = new Uri(resourceDictionary, UriKind.Relative);
+
+                ResourceDictionary themeResources = (ResourceDictionary)Application.LoadComponent(uri);
+
+                XmlTextWriter writer = new XmlTextWriter(filename, Encoding.UTF8);
+                writer.Formatting = Formatting.Indented;
+
+                XamlWriter.Save(themeResources, writer);
+
+                writer.Close();
+                writer.Dispose();
+
+                // read it back in
+                string resourceDictionaryString = File.ReadAllText(filename);
+
+                File.Delete(filename);
+
+                ResourceDictionaryString = resourceDictionaryString;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error occurred attempting to generate Aero ResourceDictionary. {ex.Message}");
+            }
+        }
+
+        private void GenerateAero()
+        {
+            GenTheme("/PresentationFramework.Aero;v4.0.0.0;Component/themes/aero.normalcolor.xaml");
+
+            MessageBox.Show("Aero generated.", "Complete");
+        }
+
+        private void GenerateLuna()
+        {
+            GenTheme("/PresentationFramework.Luna;v4.0.0.0;Component/themes/luna.normalcolor.xaml");
+
+            MessageBox.Show("Luna generated.", "Complete");
+        }
+
+        private void GenerateLunaHomestead()
+        {
+            GenTheme("/PresentationFramework.Luna;v4.0.0.0;Component/themes/luna.homestead.xaml");
+
+            MessageBox.Show("Luna Homestead generated.", "Complete");
+        }
+
+        private void GenerateMetallic()
+        {
+            GenTheme("/PresentationFramework.Luna;v4.0.0.0;Component/themes/luna.metallic.xaml");
+
+            MessageBox.Show("Luna Metallic generated.", "Complete");
+        }
+
+        private void GenerateClassic()
+        {
+            GenTheme("/PresentationFramework.Classic;v4.0.0.0;Component/themes/classic.xaml");
+
+            MessageBox.Show("Classic generated.", "Complete");
+        }
+
+        private void GenerateRoyale()
+        {
+            GenTheme("/PresentationFramework.Royale;v4.0.0.0;Component/themes/royale.normalcolor.xaml");
+
+            MessageBox.Show("Royale generated.", "Complete");
+        }
+
         private void GetAndDisplayControlTemplate()
         {
             try
@@ -171,7 +285,7 @@ namespace DefaultControlTemplateViewer
                 // get instance of FrameworkTemplate object and instantiate it and render it (via binding)
                 object? instance = presentationFramework.CreateInstance(SelectedTypeMap.Type.FullName);
                 Type? instanceType = instance?.GetType();
-                
+
                 if (instance == null) return;
                 if (instanceType == null) return;
 
