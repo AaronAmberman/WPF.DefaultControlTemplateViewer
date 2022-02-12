@@ -3,7 +3,7 @@ A tool for viewing default control templates for built in WPF controls.
 
 Inspired by Show Me The Templates! (https://sellsbrothers.com/2091). Just more updated and a better laid out UI.
 
-So, I added a cool thing. <u>The ability to generate the entire resource dictionary</u> for the known themes (Aero, Luna, Luna Homestead, Luna Metallic, Classic and Royale). This can help greatly, even more so than just viewing individual templates. Be warned that they are over 20K lines. Change xmlns:s="clr-namespace:System;assembly=System.Private.CoreLib" to xmlns:s="clr-namespace:System;assembly=mscorlib" and that will take care of hundreds of the errors that are generated. 
+So, I added a cool thing. The ability to generate the entire resource dictionary for the known themes (Aero, Luna, Luna Homestead, Luna Metallic, Classic and Royale). This can help greatly, even more so than just viewing individual templates. Be warned that they are over 20K lines. Change xmlns:s="clr-namespace:System;assembly=System.Private.CoreLib" to xmlns:s="clr-namespace:System;assembly=mscorlib" and that will take care of hundreds of the errors that are generated. 
 
 ![SimpleUI](https://user-images.githubusercontent.com/23512394/153528660-44858050-7ebc-4703-84ad-9eef747f113f.png)
 ![KnownThemeSelection](https://user-images.githubusercontent.com/23512394/153528723-e863b0f9-0a65-46ba-950a-5ea6bbfcd028.png)
